@@ -4,6 +4,19 @@ All notable changes to `phil/markup` will be documented in this file.
 
 Updates should follow the [Keep a CHANGELOG](https://keepachangelog.com/) principles.
 
+## 0.2.0-alpha - 2026-11-14
+
+### Fixed
+
+- The HTML reader, and the HTML tags read in wikitext, keep `<strong>` and `<em>` as `<strong>` and `<em>` in UJO,
+  instead of `<b>` and `<i>`.
+
+### Changed
+
+- The level `all` follows the safe elements of Symfony 8.2.0-BETA2's HtmlSanitizer: `link`, `meta`, `plaintext`,
+  `html`, `body` and the attribute `referrerpolicy` are no longer kept.
+- `phil/ujo` 0.1.1 or later is required, so that `<strong>` and `<em>` are kept from the reader to the HTML rendered.
+
 ## 0.1.0-alpha - 2026-11-11
 
 ### Added

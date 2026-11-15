@@ -31,8 +31,10 @@
 | `Reader\UjoReader` | `MarkupReader` | UJO JSON, through `phil/ujo` |
 | `Reader\Text\TextReader` | `MarkupReader` | Plain text: a `paragraph` for each run of lines, line breaks kept, addresses made links |
 | `Adapter\DefaultCompiler` | `LevelAwareCompiler` | Every format, the add-ons' given by name; `reader($format, $level)` gives the reader of a format into UJO — HTML's and plain text's too, though both are compiled without it —; `formats()` the name of each |
-| `Adapter\SanitizerPurifier` | `HtmlPurifier` | `defaultPolicies()`, one sanitizer per level |
-| `Adapter\CodeClasses` | `final readonly class` | The classes kept on `code` (`language-…`) and `span` (`hl-…`), an attribute sanitizer of `symfony/html-sanitizer` |
+| `Adapter\SanitizerPurifier` | `HtmlPurifier` | `defaultPolicies()`, one sanitizer per level; `configurations()`, the configuration of each level |
+| `Adapter\AmmoniaPurifier` | `HtmlPurifier` | `defaultPolicies()` on the `ammonia` extension, the same policies; `isAvailable()`: see [Accelerators](accelerators.md) |
+| `Adapter\Purifiers` | `final readonly class` | `defaultPolicies($mediaHosts, $extension)`: `AmmoniaPurifier` where the extension is loaded, `SanitizerPurifier` otherwise |
+| `Adapter\CodeClasses` | `final readonly class` | The classes kept on `code` (`language-…`) and `span` (`hl-…`), an attribute sanitizer of `symfony/html-sanitizer`; `keep()`, the classes it keeps of a value |
 | `Adapter\PlainText`, `Adapter\Autolink` | compilers | Plain text, links in text |
 
 The root namespace — formats, levels, ports and exceptions — is what a domain model may name; the analyser, the
@@ -65,7 +67,7 @@ to. [Formats](formats.md) lists, feature by feature, how each format writes it.
 |---|---|---|
 | `basic` | `strong`, `b`, `em`, `i`, `u`, `s`, `del`, `sub`, `sup`, `code`, `br` | a name, a caption, a short comment |
 | `forum` | basic, with `p`, `a`, `img`, `ul`, `ol`, `li`, `blockquote`, `cite`, `pre`, `hr` | a message of a forum |
-| `all` | every element `symfony/html-sanitizer` counts as safe, headings and tables included | an article an editor writes |
+| `all` | every element `symfony/html-sanitizer` counts as safe, headings and tables included, and the disabled checkbox of a checklist item | an article an editor writes |
 
 A container a level does not allow — a paragraph, a list, a heading, a table — is removed and its text kept; any
 other element — a script, a frame, a form, an object — is removed with its content. Every level removes attributes
@@ -87,3 +89,22 @@ An image from another host loses its `src`; a relative image, served by the site
 members write texts at `forum` gives the hosts it serves images from, or `[]`.
 
 Purify again what was stored when it is shown: a policy that tightens then applies to texts written before.
+`Purifiers::defaultPolicies()` takes the same hosts, and purifies with the `ammonia` extension where it is loaded:
+see [Accelerators](accelerators.md).
+
+## Checklists
+
+`phil/ujo` renders each item of a `checklist` with a disabled checkbox, `checked` when the item is, in a `<label>` that
+holds the item's text: a screen reader announces a checkbox, its state and its name, and nobody can tick it. The level
+decides what is left of it:
+
+| Level | A checked item, `- [x] done` | Why |
+|---|---|---|
+| `all` | `<li><label><input type="checkbox" disabled checked />done</label></li>` | The checkbox is the accessible form of the state |
+| `forum` | `<li>☑ done</li>` | No `input` is kept below `all`: the state is written as text, `☑` checked and `☐` not, which screen readers name |
+| `basic` | `☑ done` | Lists are removed with their text kept; the state stays in the text |
+
+`DefaultCompiler` writes the state as text below `all` with `CheckboxText`, a filter on the rendered HTML; HTML
+compiled as written loses the state of its checkboxes below `all`. At `all`, `SanitizerPurifier` writes each
+`input` again as `<input type="checkbox" disabled>`, with `checked` when it had it, and removes an input of any other
+type, an input without a type included: no purified text holds a field a reader could type in or submit.

@@ -4,6 +4,45 @@ All notable changes to `phil/markup` will be documented in this file.
 
 Updates should follow the [Keep a CHANGELOG](https://keepachangelog.com/) principles.
 
+## 0.2.1-alpha - 2026-11-15
+
+### Added
+
+- `Adapter\AmmoniaPurifier`: the policies of `SanitizerPurifier::defaultPolicies()` on the `ammonia` extension of PHP,
+  for PHP 8.2 to 8.5, about twice as fast as the sanitizer from 12 KB and with a seventh of its memory on 100 KB; the
+  same elements kept at each level, `style` and the addresses the extension does not check removed, classes filtered as
+  `CodeClasses` filters them. A short HTML, an HTML of more than 10,000 tags, one holding `<noscript`, one that is not
+  valid UTF-8, and images of limited hosts go to the sanitizer. `isAvailable()` tells whether the extension is loaded;
+  `ext-ammonia` in `suggest`.
+- `Adapter\Purifiers::defaultPolicies()`: `AmmoniaPurifier` where the extension is loaded, `SanitizerPurifier`
+  otherwise, or always the sanitizer.
+- `SanitizerPurifier::configurations()`, the configuration of each level the default policies are built from;
+  `CodeClasses::keep()`, the classes kept of a `class` attribute.
+- `Exception\MissingExtension`, thrown by an adapter whose extension is not loaded.
+- `PurifierCorpusTest`, hostile HTML given to both purifiers at each level; the fuzz target `markup-purifier`; the
+  benchmark `PurifierBench`, the purification alone; the worker page purifies with `Purifiers`.
+- The page [Accelerators](doc/accelerators.md).
+- `Adapter\CheckboxText`, the filter `DefaultCompiler` runs below the level `all`: the checkbox of a checklist item
+  written as text, `☑` checked and `☐` not, so that the state is still read where no `input` is kept.
+- `LossReason::MisplacedCheckbox`, a checkbox in a list item that is not at its start; `LossReason::PartialChecklist`,
+  a checkbox at the start of an item in a list some items of which say no state; `LossReason::TableInListItem`, a
+  table in a list item, which UJO has no place for.
+- The section [Checklists](doc/reference.md#checklists) of the reference: what each level keeps of a checklist.
+
+### Changed
+
+- Bold and italic in Markdown — `**b**`, `__b__`, `*i*`, `_i_` — are `<strong>` and `<em>`, as CommonMark writes
+  them, `***x***` being `<em><strong>x</strong></em>`; so are `'''bold'''` and `''italic''` in MediaWiki, and
+  `**bold**` and `//italic//` in DokuWiki and Creole. BBCode's `[b]` and `[i]`, and the tags `<b>` and `<i>` of HTML,
+  stay `<b>` and `<i>`.
+- The level `all` keeps the checkbox of a checklist item: `SanitizerPurifier` writes each `input` again as
+  `<input type="checkbox" disabled>`, `checked` when it had it, and removes an input of any other type or without a
+  type. Below `all`, `label` is unwrapped, its text kept.
+- `AmmoniaPurifier` gives an HTML that holds `<input` to the sanitizer.
+- The HTML reader takes the state of a checklist item from the checkbox at its start only — a child of the `<li>`, or
+  the first child of a `<label>` or a `<p>` it starts with —, and takes that checkbox out of the item's content.
+- `phil/ujo` 0.1.2 or later is required, for the accessible checkboxes of its checklists.
+
 ## 0.2.0-alpha - 2026-11-14
 
 ### Fixed

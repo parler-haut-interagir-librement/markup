@@ -4,9 +4,30 @@ All notable changes to `phil/markup` will be documented in this file.
 
 Updates should follow the [Keep a CHANGELOG](https://keepachangelog.com/) principles.
 
+## 0.3.1-alpha - 2026-11-20
+
+A Markdown source holding more than 100,000 lines, read before, is refused by
+default. A patch version and not a minor one: a source of 1 MiB at most, the default ceiling, holds that many lines
+only when most of them are empty.
+
+### Added
+
+- `Exception\InputTooComplex`, thrown by `MarkdownReader` for a source holding more lines than `maxLines`, counted
+  before a list of its lines is built, whatever ends them; `$budget` names the budget, `lines`, and `$limit` its value.
+- `maxLines` on `MarkdownReader`; `MarkdownReader::DEFAULT_MAX_LINES`, 100,000.
+- The section [The budget of lines of Markdown](doc/analyser.md#the-budget-of-lines-of-markdown).
+- Purifier corpus entries for character references padded with zeros and special schemes without their authority, and
+  a test of images limited to some hosts in every address: `srcset` on `img` and `source`, a scheme without `//`, an
+  address without its scheme, a host that only starts like an allowed one.
+
+### Changed
+
+- The fuzz target `markup-markdown` reads under a budget of 64 lines and checks that a source is refused exactly when
+  it holds more; the seed `many-lines.md` mixes the three ends of a line.
+
 ## 0.3.0-alpha - 2026-11-18
 
-The next version is 0.3.0-alpha: a source longer than 1 MiB, or a UJO source longer than 4 MiB, read before, is
+A source longer than 1 MiB, or a UJO source longer than 4 MiB, read before, is
 refused by default, so is an HTML longer than 4 MiB given to a purifier, and an HTML comment alone in Markdown is a
 note instead of text.
 
